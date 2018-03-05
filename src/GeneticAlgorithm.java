@@ -2,13 +2,12 @@ import java.util.*;
 
 public class GeneticAlgorithm {
     private int population[][];
-    private int selectedPopulation[][];
     private int populationSize = 1000;
-    private int generationSize = 1000;
-    private int tournamentSize = 5;
+    private int generationSize = 100;
+    private int tournamentSize = 2;
     private int individualSize;
-    private double crossoverProbabilityPercent = 0;
-    private double mutationProbabilityPercent = 0.1;
+    private double crossoverProbabilityPercent = 70;
+    private double mutationProbabilityPercent = 20;
 
     private int currentGeneration = 0;
 
@@ -35,9 +34,6 @@ public class GeneticAlgorithm {
         while (currentGeneration < generationSize) {
             System.out.println("GENERATION: " + currentGeneration);
             selection();
-            crossover();
-            mutation();
-            population = selectedPopulation;
             evaluate();
             currentGeneration++;
         }
@@ -47,7 +43,6 @@ public class GeneticAlgorithm {
     private void initialize() {
         individualSize = dataManager.getMatrixSize();
         population = new int[populationSize][individualSize];
-        selectedPopulation = new int[populationSize][individualSize];
         for (int i = 0; i < populationSize; i++) {
             ArrayList<Integer> arrayList = new ArrayList<>();
             while (arrayList.size() < individualSize) {
@@ -74,9 +69,27 @@ public class GeneticAlgorithm {
     }
 
     private void selection() {
-        for (int i = 0; i < populationSize; i++) {
-            selectedPopulation[i] = getBestMemberFromTournament();
+        ArrayList<int[]> selectionPopulation = new ArrayList<>();
+        for (int i = 0; i < populationSize / 2; i++) {
+            ArrayList<int[]> members = new ArrayList<>();
+            members.add(getBestMemberFromTournament());
+            members.add(getBestMemberFromTournament());
+
+            ArrayList<int[]> crossedMembers = crossover(members);
+            ArrayList<int[]> mutatedMembers = mutation(crossedMembers);
+            selectionPopulation.add(mutatedMembers.get(0));
+            selectionPopulation.add(mutatedMembers.get(1));
         }
+        for (int i = 0; i < populationSize; i++) {
+            population[i] = selectionPopulation.get(i);
+        }
+    }
+
+    private ArrayList<int[]> crossover(ArrayList<int[]> members) {
+        if (crossoverProbabilityPercent >= random.nextDouble() * 101) {
+            return cross(members);
+        }
+        return members;
     }
 
     private int[] getBestMemberFromTournament() {
@@ -93,26 +106,19 @@ public class GeneticAlgorithm {
         return members;
     }
 
-    private void mutation() {
-        for (int i = 0; i < populationSize; i++) {
-            mutate(selectedPopulation[i]);
+    private ArrayList<int[]> mutation(ArrayList<int[]> members) {
+        ArrayList<int[]> mutatedMembers = new ArrayList<>();
+        for (int i = 0; i < members.size(); i++) {
+            mutatedMembers.add(mutate(members.get(i)));
         }
+        return mutatedMembers;
     }
 
-    private void crossover() {
-        for (int i = 0; i < populationSize; i++) {
-            if (crossoverProbabilityPercent >= random.nextDouble() * 101) {
-                int randomX = random.nextInt(populationSize);
-                int randomY = random.nextInt(populationSize);
-                cross(randomX, randomY);
-            }
-        }
-    }
-
-    private void cross(int randomX, int randomY) {
-        int parentA[] = selectedPopulation[randomX];
-        int parentB[] = selectedPopulation[randomY];
+    private ArrayList<int[]> cross(ArrayList<int[]> members) {
         int pivot = random.nextInt(individualSize + 2) + 1;
+
+        int[] parentA = members.get(0);
+        int[] parentB = members.get(1);
 
         int[] childA = new int[individualSize];
         int[] childB = new int[individualSize];
@@ -144,8 +150,9 @@ public class GeneticAlgorithm {
             childB[indexB.get(i)] = temp;
         }
 
-        selectedPopulation[randomX] = childA;
-        selectedPopulation[randomY] = childB;
+        members.set(0, childA);
+        members.set(1, childB);
+        return members;
     }
 
 
@@ -162,23 +169,21 @@ public class GeneticAlgorithm {
     }
 
     private int[] mutate(int[] newIndividual) {
-        for (int i = 0; i < individualSize; i++) {
-            if (mutationProbabilityPercent >= random.nextDouble() * 101) {
-                int pivotStart, pivotEnd;
-                do {
-                    pivotStart = random.nextInt(individualSize);
-                    pivotEnd = random.nextInt(individualSize);
-                } while (pivotStart == pivotEnd);
+        if (mutationProbabilityPercent >= random.nextDouble() * 101) {
+            int pivotStart, pivotEnd;
+            do {
+                pivotStart = random.nextInt(individualSize);
+                pivotEnd = random.nextInt(individualSize);
+            } while (pivotStart == pivotEnd);
 
-                int temp = newIndividual[pivotStart];
-                newIndividual[pivotStart] = newIndividual[pivotEnd];
-                newIndividual[pivotEnd] = temp;
-            }
+            int temp = newIndividual[pivotStart];
+            newIndividual[pivotStart] = newIndividual[pivotEnd];
+            newIndividual[pivotEnd] = temp;
         }
         return newIndividual;
     }
 
-    private int costs(int[] input) {
+    int costs(int[] input) {
         int result = 0;
         for (int i = 0; i < dataManager.getMatrixSize(); i++) {
             for (int j = 0; j < dataManager.getMatrixSize(); j++) {
@@ -193,7 +198,7 @@ public class GeneticAlgorithm {
                 "/Users/artyomvlasov/Desktop/test_data.csv",
                 bestResults, averageResults, worstResults);
         System.out.println(costs(bestMember));
-        for (int i = 0; i < individualSize; i++){
+        for (int i = 0; i < individualSize; i++) {
             System.out.print(bestMember[i] + " ");
         }
     }
