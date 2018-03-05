@@ -3,11 +3,11 @@ import java.util.*;
 public class GeneticAlgorithm {
     private int population[][];
     private int populationSize = 1000;
-    private int generationSize = 100;
-    private int tournamentSize = 2;
+    private int generationSize = 500;
+    private int tournamentSize = 5;
     private int individualSize;
     private double crossoverProbabilityPercent = 70;
-    private double mutationProbabilityPercent = 20;
+    private double mutationProbabilityPercent = 40;
 
     private int currentGeneration = 0;
 
@@ -169,16 +169,17 @@ public class GeneticAlgorithm {
     }
 
     private int[] mutate(int[] newIndividual) {
-        if (mutationProbabilityPercent >= random.nextDouble() * 101) {
-            int pivotStart, pivotEnd;
-            do {
-                pivotStart = random.nextInt(individualSize);
-                pivotEnd = random.nextInt(individualSize);
-            } while (pivotStart == pivotEnd);
+        for (int i = 0; i < individualSize; i++) {
+            if (mutationProbabilityPercent >= random.nextDouble() * 101) {
+                int pivotToMutate;
+                do {
+                    pivotToMutate = random.nextInt(individualSize);
+                } while (pivotToMutate == i);
 
-            int temp = newIndividual[pivotStart];
-            newIndividual[pivotStart] = newIndividual[pivotEnd];
-            newIndividual[pivotEnd] = temp;
+                int temp = newIndividual[pivotToMutate];
+                newIndividual[pivotToMutate] = newIndividual[i];
+                newIndividual[i] = temp;
+            }
         }
         return newIndividual;
     }
