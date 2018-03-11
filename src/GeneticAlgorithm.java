@@ -2,23 +2,22 @@ import java.util.*;
 
 public class GeneticAlgorithm {
     private int population[][];
-    private int populationSize = 1000;
-    private int generationSize = 500;
+    private int populationSize = 100;
+    private int generationSize = 100;
     private int tournamentSize = 5;
     private int individualSize;
-    private double crossoverProbabilityPercent = 70;
-    private double mutationProbabilityPercent = 40;
+    private double crossoverProbabilityPercent = 0.7;
+    private double mutationProbabilityPercent = 0.01;
 
     private int currentGeneration = 0;
 
     private DataManager dataManager;
     private Random random;
 
-    private int bestMember[];
-
     private int bestResults[];
     private int worstResults[];
     private int averageResults[];
+    private int bestResult;
 
     public GeneticAlgorithm(DataManager dataManager) {
         this.dataManager = dataManager;
@@ -60,7 +59,7 @@ public class GeneticAlgorithm {
         for (int i = 0; i < populationSize; i++) {
             results[i] = costs(population[i]);
         }
-        Integer bestResult = Collections.min(Arrays.asList(results));
+        bestResult = Collections.min(Arrays.asList(results));
         bestResults[currentGeneration] = bestResult;
         Integer worstResult = Collections.max(Arrays.asList(results));
         worstResults[currentGeneration] = worstResult;
@@ -86,7 +85,7 @@ public class GeneticAlgorithm {
     }
 
     private ArrayList<int[]> crossover(ArrayList<int[]> members) {
-        if (crossoverProbabilityPercent >= random.nextDouble() * 101) {
+        if (crossoverProbabilityPercent >= random.nextDouble()) {
             return cross(members);
         }
         return members;
@@ -114,11 +113,11 @@ public class GeneticAlgorithm {
         return mutatedMembers;
     }
 
-    private ArrayList<int[]> cross(ArrayList<int[]> members) {
+    private ArrayList<int[]> cross(ArrayList<int[]> individuals) {
         int pivot = random.nextInt(individualSize + 2) + 1;
 
-        int[] parentA = members.get(0);
-        int[] parentB = members.get(1);
+        int[] parentA = individuals.get(0);
+        int[] parentB = individuals.get(1);
 
         int[] childA = new int[individualSize];
         int[] childB = new int[individualSize];
@@ -135,6 +134,7 @@ public class GeneticAlgorithm {
 
         ArrayList<Integer> indexA = new ArrayList<>();
         ArrayList<Integer> indexB = new ArrayList<>();
+
         for (int i = 0; i < individualSize; i++) {
             if (i < pivot && !ArrayUtils.isArrayContainsValue(childB, childA[i])) {
                 indexA.add(i);
@@ -150,9 +150,9 @@ public class GeneticAlgorithm {
             childB[indexB.get(i)] = temp;
         }
 
-        members.set(0, childA);
-        members.set(1, childB);
-        return members;
+        individuals.set(0, childA);
+        individuals.set(1, childB);
+        return individuals;
     }
 
 
@@ -163,14 +163,13 @@ public class GeneticAlgorithm {
                 bestMember = members[i];
             }
         }
-        this.bestMember = bestMember;
 
         return bestMember;
     }
 
     private int[] mutate(int[] newIndividual) {
         for (int i = 0; i < individualSize; i++) {
-            if (mutationProbabilityPercent >= random.nextDouble() * 101) {
+            if (mutationProbabilityPercent >= random.nextDouble()) {
                 int pivotToMutate;
                 do {
                     pivotToMutate = random.nextInt(individualSize);
@@ -195,13 +194,18 @@ public class GeneticAlgorithm {
     }
 
     private void outputData() {
-        dataManager.outputDataToFile(
-                "/Users/artyomvlasov/Desktop/test_data.csv",
+        dataManager.outputDataToFile(getOutputFileName(),
                 bestResults, averageResults, worstResults);
-        System.out.println(costs(bestMember));
-        for (int i = 0; i < individualSize; i++) {
-            System.out.print(bestMember[i] + " ");
-        }
+        System.out.println(bestResults[generationSize - 1]);
+    }
+
+    private String getOutputFileName() {
+        return "/Users/artyomvlasov/Desktop/Dataset/Had20/pop_" + populationSize
+                + "_gen_" + generationSize
+                + "_tour_" + tournamentSize
+                + "_cross_" + crossoverProbabilityPercent
+                + "_mut_" + mutationProbabilityPercent + ".csv";
+
     }
 
 }
